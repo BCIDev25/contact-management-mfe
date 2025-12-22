@@ -1,0 +1,10 @@
+<remote-component
+  [remoteEntry]="uiMfeUrl"
+  [exposedModule]="'./Form'"
+  [exportName]="'FormComponent'"
+  [inputs]="{
+    config: formConfig(),
+    loading: loading,
+  }"
+  (outputs)="onRemoteOutput($event)"
+></remote-component>

@@ -1,0 +1,17 @@
+@if (loading()) {
+<div class="loading-message">
+    <i class="pi pi-spinner pi-spin"></i> Loading staff...
+</div>
+}
+
+@if (!loading()) {
+
+    <remote-component
+    [remoteEntry]="uiMfeUrl"
+    [exposedModule]="'./Form'"
+    [exportName]="'FormComponent'"
+    [inputs]="{ config: formConfig() }"
+    (outputs)="onRemoteOutput($event)"
+    ></remote-component>
+} 
+
