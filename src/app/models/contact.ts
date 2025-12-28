@@ -53,6 +53,22 @@ export interface ImportStaffRow {
   status?: string;
 }
 
+export interface ContactClientList {
+    uniqId: number;
+    contactId: string;
+    contactName: string;
+    contactRegId: string;
+    status: string;  
+}
+
+export interface ImportClientRow {
+  contactType: string;
+  contactId: string;
+  contactName: string;
+  contactRegId: string;
+  status?: string;
+}
+
 export interface DropdownOption {
   value: string;
   label: string;
@@ -61,9 +77,8 @@ export interface DropdownOption {
 export interface DropdownResponse {
   clients: DropdownOption[];
   projects: DropdownOption[];
-  salesmen: DropdownOption[];
   staff: DropdownOption[];
   departments: DropdownOption[];
+  contacts: DropdownOption[];
   contacttypes: DropdownOption[];
-  currencies: DropdownOption[];
 }

@@ -18,11 +18,11 @@ import { Popover } from 'primeng/popover';
 import { PopoverModule } from 'primeng/popover';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { distinctUntilChanged } from 'rxjs';
-import { ContactStaffService } from '../services/contact-staff-service';
+import { ContactClientService } from '../services/contact-client-service';
 import { DropdownOption } from '../../models/contact';
 
 @Component({
-    selector: 'app-contact-staff-filter-component',
+    selector: 'app-contact-client-filter-component',
     imports: [
         ButtonModule,
         DatePickerModule,
@@ -31,25 +31,25 @@ import { DropdownOption } from '../../models/contact';
         SelectModule,
         PopoverModule
     ],
-    templateUrl: './contact-staff-filter-component.html',
-    styleUrl: './contact-staff-filter-component.scss',
+    templateUrl: './contact-client-filter-component.html',
+    styleUrl: './contact-client-filter-component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ContactStaffFilterComponent implements OnInit {
-    @ViewChild('ContactStaffFilter') contactStaffFilter!: Popover;
+export class ContactClientFilterComponent implements OnInit {
+    @ViewChild('ContactClientFilter') contactClientFilter!: Popover;
     @Output() applied = new EventEmitter<void>();
 
     statusOpts = signal<DropdownOption[]>([
         { label: 'Active', value: 'ACTIVE' },
-        { label: 'All Staff', value: '' }
+        { label: 'All Contact', value: '' }
     ]);
-    staffOpts = signal<DropdownOption[]>([]);
+    contactsOpts = signal<DropdownOption[]>([]);
 
     loading = signal<boolean>(false);
-    staffLoading = signal<boolean>(false);
+    clientLoading = signal<boolean>(false);
 
     fb = inject(FormBuilder);
-    staffListService = inject(ContactStaffService);
+    clientListService = inject(ContactClientService);
 
     form: FormGroup;
     localFilter = signal<Record<string, any>>({});
@@ -58,10 +58,8 @@ export class ContactStaffFilterComponent implements OnInit {
     constructor() {
         this.form = this.fb.group({
             status: [''],
-            staffId: [''],
-            nric: [''],
-            dateFrom: [''],
-            dateTo: [''],
+            contactId: [''],
+            contactRegId: [''],
         });
 
         this.form.valueChanges.pipe(distinctUntilChanged()).subscribe((v) => this.localFilter.set(v));
@@ -74,12 +72,11 @@ export class ContactStaffFilterComponent implements OnInit {
     private loadDropdowns(): void {
         this.loading.set(true);
 
-        const requiredTypes = ['staff'];
+        const requiredTypes = ['contacts'];
 
-        this.staffListService.getDropdownsByTypes(requiredTypes).subscribe({
+        this.clientListService.getDropdownsByTypes(requiredTypes).subscribe({
             next: (data) => {
-                this.staffOpts.set(this.formatDropdownOptions(data.staff || []));
-
+                this.contactsOpts.set(this.formatDropdownOptions(data.contacts || []));
                 this.loading.set(false);
             },
             error: (err) => {
@@ -96,7 +93,7 @@ export class ContactStaffFilterComponent implements OnInit {
     }
 
     toggle(event: MouseEvent) {
-        this.contactStaffFilter.toggle(event);
+        this.contactClientFilter.toggle(event);
     }
 
     apply(): void {
@@ -114,7 +111,7 @@ export class ContactStaffFilterComponent implements OnInit {
         this.filter.set(cleaned);
 
         this.applied.emit();
-        this.contactStaffFilter.hide();
+        this.contactClientFilter.hide();
     }
 
     clear(): void {
@@ -129,7 +126,7 @@ export class ContactStaffFilterComponent implements OnInit {
         this.applied.emit();
 
         // Close popover
-        this.contactStaffFilter.hide();
+        this.contactClientFilter.hide();
     }
 
     private formatDate(value: any): string | null {

@@ -2,23 +2,23 @@ import { Component, Inject, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormConfig } from '@ai-solutions-ui/form-component';
 import { RemoteComponent } from '../../components/remote-component';
-import { ContactStaffService } from '../services/contact-staff-service';
+import { ContactClientService } from '../services/contact-client-service';
 import { environment } from '../../../environments/environment';
 import { DropdownOption, DropdownResponse, IAppMessageService } from '../../models/contact';
 
 @Component({
-    selector: 'app-contact-staff-edit',
+    selector: 'app-contact-client-edit',
     standalone: true,
     imports: [RemoteComponent],
-    templateUrl: './contact-staff-edit-component.html',
-    styleUrls: ['./contact-staff-edit-component.scss'],
+    templateUrl: './contact-client-edit-component.html',
+    styleUrls: ['./contact-client-edit-component.scss'],
 })
-export class ContactStaffEditComponent implements OnInit {
+export class ContactClientEditComponent implements OnInit {
 
     //#region INJECTED DEPENDECIES
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private staffService = inject(ContactStaffService);
+    private clientService = inject(ContactClientService);
 
     constructor(
         @Inject('MESSAGING_SERVICE')
@@ -29,10 +29,10 @@ export class ContactStaffEditComponent implements OnInit {
     //#region SIGNALS - UI STATE MANAGEMENT
 
     // Data maps for lookups
-    private departmentDataMap = signal<Map<string, string>>(new Map());
+    private contactTypeDataMap = signal<Map<string, string>>(new Map());
     
     // Dropdown options
-    departmentOpts = signal<DropdownOption[]>([]);
+    contactTypeOpts = signal<DropdownOption[]>([]);
     
     // UI loading states
     uniqId = signal<number | null>(null);
@@ -46,65 +46,57 @@ export class ContactStaffEditComponent implements OnInit {
     //#region FORM CONFIGURATION
 
     private readonly formFields = [
-        // ========== ROW 1: Staff ID, Staff Name ==========
+        // ========== ROW 1: Contact Type, Contact ID ==========
+         {
+            key: 'contactType',
+            label: 'Contact Type',
+            type: 'select' as const,
+            icon: 'pi-building',
+            colSpan: 3,
+            options: [],
+        },
         {
-            key: 'staffId',
-            label: 'Staff ID',
+            key: 'contactId',
+            label: 'Contact ID',
             type: 'text' as const,
             icon: 'pi-hashtag',
             colSpan: 3,
         },
+
+        // ========== ROW 2: Contact Name, Contact Registration No ==========
         {
-            key: 'staffName',
-            label: 'Staff Name',
+            key: 'contactName',
+            label: 'Contact Name',
             type: 'text' as const,
             icon: 'pi-user',
-            colSpan: 3,
-        },
-
-        // ========== ROW 2: NRIC ==========
-        {
-            key: 'nric',
-            label: 'NRIC',
-            type: 'text' as const,
-            icon: 'pi-id-card',
-            colSpan: 6,
-        },
-
-        // ========== ROW 3: Department, Date Join ==========
-        {
-            key: 'departmentId',
-            label: 'Department',
-            type: 'select' as const,
-            icon: 'pi-sitemap',
             colSpan: 4,
-            options: [],
         },
+    
         {
-            key: 'dateJoin',
-            label: 'Join Date',
-            type: 'date' as const,
-            icon: 'pi-calendar',
+            key: 'contactRegId',
+            label: 'Contact Registration No.',
+            type: 'text' as const,
+            icon: 'pi-file',
             colSpan: 2,
         },
     ];
 
     private formConfigSignal = signal<FormConfig>({
-        title: 'Edit Staff',
+        title: 'Edit Client',
         layout: 'grid',  
         gridColumns: 6,   
         fields: this.formFields,
         model: {
-            staffId: '',
-            staffName: '',
-            nric: '',
-            departmentId: '',
-            dateJoin: '',
+            contactType: '',
+            contactId: '',
+            contactName: '',
+            contactRegId: '',
         },
         buttonLabel: 'Save Changes',
     });
 
     formConfig = this.formConfigSignal.asReadonly();
+
     //#endregion
  
     ngOnInit(): void {
@@ -112,8 +104,8 @@ export class ContactStaffEditComponent implements OnInit {
             const id = Number(params['id']);
             
             if (isNaN(id) || id <= 0) {
-                this.messageService.showError('Error', 'Invalid Staff ID');
-                this.router.navigate(['/contact/staff/list']);
+                this.messageService.showError('Error', 'Invalid Client ID');
+                this.router.navigate(['/contact/client/list']);
                 return;
             }
             
@@ -127,12 +119,12 @@ export class ContactStaffEditComponent implements OnInit {
     private loadInitialFormData(id: number): void {
         this.loading.set(true);
         
-        const requiredTypes = ['departments'];
+        const requiredTypes = ['contacttypes'];
 
-        this.staffService.getDropdownsByTypes(requiredTypes).subscribe({
+        this.clientService.getDropdownsByTypes(requiredTypes).subscribe({
             next: (data: DropdownResponse) => {
                 this.processDropdownData(data)          
-                this.loadStaff(id);
+                this.loadClient(id);
             },
             error: (err) => {
                 this.messageService.showError('Error', err);
@@ -142,60 +134,59 @@ export class ContactStaffEditComponent implements OnInit {
     }
 
     private processDropdownData(data: DropdownResponse): void {
-        const departmentMap = new Map<string, string>();
+        const contactTypeMap = new Map<string, string>();
 
-        const departmentOptions = (data.departments || []).map((item: DropdownOption) => {
-            departmentMap.set(item.value, item.label); 
+        const contactTypeOptions = (data.contacttypes || []).map((item: DropdownOption) => {
+            contactTypeMap.set(item.value, item.label); 
             return {
                 value: item.value,
                 label: `${item.label}` 
             };
         });
 
-        this.departmentDataMap.set(departmentMap);
+        this.contactTypeDataMap.set(contactTypeMap);
 
-        this.departmentOpts.set(departmentOptions);
+        this.contactTypeOpts.set(contactTypeOptions);
 
-        this.updateFieldOptions('departmentId', this.departmentOpts());
+        this.updateFieldOptions('contactType', this.contactTypeOpts());
     }
 
-    private loadStaff(id: number): void {
+    private loadClient(id: number): void {
         this.loading.set(true);
         
-        this.staffService.getStaffById(id).subscribe({
-            next: (staff) => {
-                this.handleStaffLoaded(staff);
+        this.clientService.getClientById(id).subscribe({
+            next: (client) => {
+                this.handleClientLoaded(client);
             },
             error: (err) => {
                 this.messageService.showError(
                     'Error', 
-                    err.error?.error || err.message || 'Failed to load staff'
+                    err.error?.error || err.message || 'Failed to load client'
                 );
                 this.loading.set(false);
-                this.router.navigate(['/contact/staff/list']);
+                this.router.navigate(['/contact/client/list']);
             }
         });
     }
 
-    private handleStaffLoaded(staff: Record<string, any>): void {
-        const formattedStaff = this.formatStaffData(staff);
+    private handleClientLoaded(client: Record<string, any>): void {
+        const formattedClient = this.formatClientData(client);
 
-        this.setFormModel(formattedStaff);
+        this.setFormModel(formattedClient);
         this.loading.set(false);
     }
 
-    private formatStaffData(staff: Record<string, any>): Record<string, any> {
+    private formatClientData(client: Record<string, any>): Record<string, any> {
         return {
-            ...staff,
-            dateJoin: this.formatDate(staff['dateJoin']),
+            ...client,
         };
     }
 
-    private setFormModel(staff: Record<string, any>): void {
+    private setFormModel(client: Record<string, any>): void {
         this.formConfigSignal.update(cfg => ({
             ...cfg,
-            title: `Edit Staff: ${staff['staffName']}`,
-            model: { ...staff }
+            title: `Edit Client: ${client['contactName']}`,
+            model: { ...client }
         }));
     }
 
@@ -207,7 +198,7 @@ export class ContactStaffEditComponent implements OnInit {
         if (event['modelChange']) { }
 
         if (event['formButtonClicked']) {
-            this.updateStaff(event['formButtonClicked']);
+            this.updateClient(event['formButtonClicked']);
         }
     }
 
@@ -218,10 +209,10 @@ export class ContactStaffEditComponent implements OnInit {
   
     //#region FORM SUBMISSION & STAFF UPDATE
 
-    updateStaff(model: Record<string, any>): void {
+    updateClient(model: Record<string, any>): void {
         const id = this.uniqId();
         if (!id) {
-            this.messageService.showError('Error', 'Staff ID is missing');
+            this.messageService.showError('Error', 'Contact ID is missing');
             return;
         }
 
@@ -229,16 +220,16 @@ export class ContactStaffEditComponent implements OnInit {
 
         this.saving.set(true);
         
-        this.staffService.updateStaff(id, payload).subscribe({
+        this.clientService.updateClient(id, payload).subscribe({
         next: () => {
-            this.messageService.showSuccess('Success', 'Staff updated successfully!');
+            this.messageService.showSuccess('Success', 'Client updated successfully!');
             this.saving.set(false);
-            this.router.navigate(['/contact/staff/']);
+            this.router.navigate(['/contact/client/']);
         },
         error: (err) => {
             this.messageService.showError(
                 'Error', 
-                err.error?.message || 'Failed to update staff'
+                err.error?.error || 'Failed to update client'
             );
             this.saving.set(false);
         }
@@ -249,8 +240,8 @@ export class ContactStaffEditComponent implements OnInit {
         // Field name mapping (form → backend)
         const fieldMap: Record<string, string> = { };
 
-        const dateFields = ['dateJoin'];
-        const uppercaseFields = ['staffId', 'staffName'];
+        const dateFields = '';
+        const uppercaseFields = ['contactId', 'contactName', 'contactRegId'];
 
         const payload: Record<string, any> = {};
 
