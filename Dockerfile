@@ -14,7 +14,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # Build Angular app for production
-RUN SHELL_URL=https://ai-solutions-shell-production.up.railway.app pnpm build --configuration production
+RUN SHELL_URL=https://ai-solutions-shell-v2-production.up.railway.app pnpm build --configuration production
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine
